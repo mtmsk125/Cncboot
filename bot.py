@@ -2,7 +2,7 @@ import json, os, difflib
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
-BOT_TOKEN = "8620485462:AAHPdZk3C5yT9OTr5pWdbxzr-DLLtoavDBw"
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
 MY_STORE = "@BootMarketStore"
 CONTACT = "@mtmk125"
 DB_FILE = "files_db.json"
@@ -47,31 +47,22 @@ async def add_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message.document or update.message.photo:
         return
-
     query = update.message.text.lower().strip()
     if len(query) < 2:
         return
-
     all_names = list(files_db.keys())
     matches = difflib.get_close_matches(query, all_names, n=5, cutoff=0.4)
     for name in all_names:
         if query in name and name not in matches:
             matches.append(name)
-
     if not matches:
         await update.message.reply_text(f"❌ File '{update.message.text}' not found\n\nOrder custom bot: {CONTACT}")
         return
-
     best = matches[0]
     data = files_db[best]
     caption = f"📁 {data['name']}\n\n🤖 via {MY_STORE}\n📩 Get your bot: {CONTACT}"
-
     try:
-        await context.bot.send_document(
-            chat_id=update.effective_chat.id,
-            document=data['id'],
-            caption=caption
-        )
+        await context.bot.send_document(chat_id=update.effective_chat.id, document=data['id'], caption=caption)
     except:
         await update.message.reply_text(f"📁 {data['name']}\n\nReady!\nvia {MY_STORE}")
 
@@ -79,9 +70,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"📊 {MY_STORE} Stats\n\nTotal files: {len(files_db)}\nBot: @BootMarketStores_bot")
 
 def main():
-    print(f"🚀 Bot @BootMarketStores_bot Started [ENGLISH MODE]")
-    print(f"📢 Store: {MY_STORE}")
-    print(f"📁 Files: {len(files_db)}")
+    print(f"🚀 Bot @BootMarketStores_bot Started [ENGLISH]...")
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stats", stats))
